@@ -3,11 +3,11 @@ Adds Visual Studio 64-bit DLL build of the zbar Python package.
 Tested with [Anaconda](http://www.continuum.io/) distribution of Python 2.7.x
 and Visual Studio Community 2013.
 
-1. Build the 64-bit Release target of zbar64
+Build the 64-bit Release target of zbar64
 
-2. Install Anaconda
+Install the current Python 2.7 release of [Anaconda](https://store.continuum.io/cshop/anaconda/)
 
-3. Build the zbar Python wrapper
+Build the zbar Python wrapper
 
     cd python
     pip install --upgrade pip
