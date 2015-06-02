@@ -14,4 +14,4 @@ Build the zbar Python wrapper
     pip install --upgrade setuptools
     pip install wheel
     build.bat
-    pip install dist/zbar-<whatever>.whl
+    pip install dist\zbar-<whatever>.whl
