@@ -61,18 +61,65 @@ symbolset_length (zbarSymbolSet *self)
 }
 
 static PySequenceMethods symbolset_as_sequence = {
-    .sq_length      = (lenfunc)symbolset_length,
+    (lenfunc)symbolset_length,
+    0,                              /* sq_concat */
+    0,                              /* sq_repeat */
+    0,                              /* sq_item */
+    0,                              /* sq_ass_item */
+    0,                              /* sq_contains */
+    0,                              /* sq_inplace_concat */
+    0,                              /* sq_inplace_repeat */
 };
 
 PyTypeObject zbarSymbolSet_Type = {
     PyObject_HEAD_INIT(NULL)
-    .tp_name        = "zbar.SymbolSet",
-    .tp_doc         = symbolset_doc,
-    .tp_basicsize   = sizeof(zbarSymbolSet),
-    .tp_flags       = Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE,
-    .tp_dealloc     = (destructor)symbolset_dealloc,
-    .tp_iter        = (getiterfunc)symbolset_iter,
-    .tp_as_sequence = &symbolset_as_sequence,
+	0,                              /* ob_size */
+    "zbar.SymbolSet",               /* tp_name */
+    sizeof(zbarSymbolSet),          /* tp_basicsize */
+    0,                              /* tp_itemsize */
+    (destructor)symbolset_dealloc,  /* tp_dealloc */
+    0,                              /* tp_print */
+    0,                              /* tp_getattr */
+    0,                              /* tp_setattr */
+    0,                              /* tp_compare */
+    0,                              /* tp_repr */
+    0,                              /* tp_as_number */
+    &symbolset_as_sequence,         /* tp_as_sequence */
+    0,                              /* tp_as_mapping */
+    0,                              /* tp_hash */
+    0,                              /* tp_call */
+    0,                              /* tp_str */
+    0,                              /* tp_getattro */
+    0,                              /* tp_setattro */
+    0,                              /* tp_as_buffer */
+    Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE,   /* tp_flags */
+    symbolset_doc,                  /* tp_doc */
+    0,                              /* tp_traverse */
+    0,                              /* tp_clear */
+    0,                              /* tp_richcompare */
+    0,                              /* tp_weaklistoffset */
+    (getiterfunc)symbolset_iter,    /* tp_iter */
+    0,                              /* tp_iternext */
+    0,                              /* tp_methods */
+    0,                              /* tp_members */
+    0,                              /* tp_getset */
+    0,                              /* tp_base */
+    0,                              /* tp_dict */
+    0,                              /* tp_descr_get */
+    0,                              /* tp_descr_set */
+    0,                              /* tp_dictoffset */
+    0,                              /* tp_init */
+    0,                              /* tp_alloc */
+    0,                              /* tp_new */
+    0,                              /* tp_free */
+    0,                              /* tp_is_gc*/
+    0,                              /* tp_bases */
+    0,                              /* tp_mro */
+    0,                              /* tp_cache */
+    0,                              /* tp_subclasses */
+    0,                              /* tp_weaklist */
+    0,                              /* tp_del */
+    0                               /* tp_version_tag */
 };
 
 zbarSymbolSet*

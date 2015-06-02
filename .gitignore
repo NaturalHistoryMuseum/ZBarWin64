@@ -1,0 +1,7 @@
+*suo
+*sdf
+x64
+python/dist
+python/build
+python/*dll
+python/zbar.egg-info

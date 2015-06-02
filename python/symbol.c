@@ -129,10 +129,10 @@ symbol_get_location (zbarSymbol *self,
                      void *closure)
 {
     if(!self->loc) {
+        unsigned int i;
         /* build tuple of 2-tuples representing location polygon */
         unsigned int n = zbar_symbol_get_loc_size(self->zsym);
         self->loc = PyTuple_New(n);
-        unsigned int i;
         for(i = 0; i < n; i++) {
             PyObject *x, *y;
             x = PyInt_FromLong(zbar_symbol_get_loc_x(self->zsym, i));
@@ -167,27 +167,65 @@ static PyGetSetDef symbol_getset[] = {
 
 PyTypeObject zbarSymbol_Type = {
     PyObject_HEAD_INIT(NULL)
-    .tp_name        = "zbar.Symbol",
-    .tp_doc         = symbol_doc,
-    .tp_basicsize   = sizeof(zbarSymbol),
-    .tp_flags       = Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE |
-                      Py_TPFLAGS_HAVE_GC,
-    .tp_traverse    = (traverseproc)symbol_traverse,
-    .tp_clear       = (inquiry)symbol_clear,
-    .tp_dealloc     = (destructor)symbol_dealloc,
-    .tp_iter        = (getiterfunc)symbol_iter,
-    .tp_getset      = symbol_getset,
+	0,                              /* ob_size */
+    "zbar.Symbol",                  /* tp_name */
+    sizeof(zbarSymbol),             /* tp_basicsize */
+    0,                              /* tp_itemsize */
+    (destructor)symbol_dealloc,     /* tp_dealloc */
+    0,                              /* tp_print */
+    0,                              /* tp_getattr */
+    0,                              /* tp_setattr */
+    0,                              /* tp_compare */
+    0,                              /* tp_repr */
+    0,                              /* tp_as_number */
+    0,                              /* tp_as_sequence */
+    0,                              /* tp_as_mapping */
+    0,                              /* tp_hash */
+    0,                              /* tp_call */
+    0,                              /* tp_str */
+    0,                              /* tp_getattro */
+    0,                              /* tp_setattro */
+    0,                              /* tp_as_buffer */
+    Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE | Py_TPFLAGS_HAVE_GC, /* tp_flags */
+    symbol_doc,                     /* tp_doc */
+    (traverseproc)symbol_traverse,  /* tp_traverse */
+    (inquiry)symbol_clear,          /* tp_clear */
+    0,                              /* tp_richcompare */
+    0,                              /* tp_weaklistoffset */
+    (getiterfunc)symbol_iter,       /* tp_iter */
+    0,                              /* tp_iternext */
+    0,                              /* tp_methods */
+    0,                              /* tp_members */
+    symbol_getset,                  /* tp_getset */
+    0,                              /* tp_base */
+    0,                              /* tp_dict */
+    0,                              /* tp_descr_get */
+    0,                              /* tp_descr_set */
+    0,                              /* tp_dictoffset */
+    0,                              /* tp_init */
+    0,                              /* tp_alloc */
+    0,                              /* tp_new */
+    0,                              /* tp_free */
+    0,                              /* tp_is_gc*/
+    0,                              /* tp_bases */
+    0,                              /* tp_mro */
+    0,                              /* tp_cache */
+    0,                              /* tp_subclasses */
+    0,                              /* tp_weaklist */
+    0,                              /* tp_del */
+    0                               /* tp_version_tag */
 };
 
 zbarSymbol*
 zbarSymbol_FromSymbol (const zbar_symbol_t *zsym)
 {
     /* FIXME symbol object recycle cache */
+    zbar_symbol_t *zs;
     zbarSymbol *self = PyObject_GC_New(zbarSymbol, &zbarSymbol_Type);
     if(!self)
         return(NULL);
     assert(zsym);
-    zbar_symbol_t *zs = (zbar_symbol_t*)zsym;
+    zs = (zbar_symbol_t*)zsym;
     zbar_symbol_ref(zs, 1);
     self->zsym = zsym;
     self->data = NULL;

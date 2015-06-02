@@ -35,11 +35,12 @@ enumitem_new (PyTypeObject *type,
 {
     int val = 0;
     PyObject *name = NULL;
+    zbarEnumItem *self;
     static char *kwlist[] = { "value", "name", NULL };
     if(!PyArg_ParseTupleAndKeywords(args, kwds, "iS", kwlist, &val, &name))
         return(NULL);
 
-    zbarEnumItem *self = (zbarEnumItem*)type->tp_alloc(type, 0);
+    self = (zbarEnumItem*)type->tp_alloc(type, 0);
     if(!self)
         return(NULL);
 
@@ -73,11 +74,13 @@ enumitem_print (zbarEnumItem *self,
 static PyObject*
 enumitem_repr (zbarEnumItem *self)
 {
+    char *namestr;
+    PyObject *repr;
     PyObject *name = PyObject_Repr(self->name);
     if(!name)
         return(NULL);
-    char *namestr = PyString_AsString(name);
-    PyObject *repr =
+    namestr = PyString_AsString(name);
+    repr =
         PyString_FromFormat("%s(%ld, %s)",
                             ((PyObject*)self)->ob_type->tp_name,
                             self->val.ob_ival, namestr);
@@ -87,17 +90,54 @@ enumitem_repr (zbarEnumItem *self)
 
 PyTypeObject zbarEnumItem_Type = {
     PyObject_HEAD_INIT(NULL)
-    .tp_name        = "zbar.EnumItem",
-    .tp_doc         = enumitem_doc,
-    .tp_basicsize   = sizeof(zbarEnumItem),
-    .tp_flags       = Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE,
-    .tp_new         = (newfunc)enumitem_new,
-    .tp_dealloc     = (destructor)enumitem_dealloc,
-    .tp_str         = (reprfunc)enumitem_str,
-    .tp_print       = (printfunc)enumitem_print,
-    .tp_repr        = (reprfunc)enumitem_repr,
+	0,                              /* ob_size */
+    "zbar.EnumItem",                /* tp_name */
+    sizeof(zbarEnumItem),           /* tp_basicsize */
+    0,                              /* tp_itemsize */
+    (destructor)enumitem_dealloc,   /* tp_dealloc */
+    (printfunc)enumitem_print,      /* tp_print */
+    0,                              /* tp_getattr */
+    0,                              /* tp_setattr */
+    0,                              /* tp_compare */
+    (reprfunc)enumitem_repr,        /* tp_repr */
+    0,                              /* tp_as_number */
+    0,                              /* tp_as_sequence */
+    0,                              /* tp_as_mapping */
+    0,                              /* tp_hash */
+    0,                              /* tp_call */
+    (reprfunc)enumitem_str,         /* tp_str */
+    0,                              /* tp_getattro */
+    0,                              /* tp_setattro */
+    0,                              /* tp_as_buffer */
+    Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE,   /* tp_flags */
+    enumitem_doc,                   /* tp_doc */
+    0,                              /* tp_traverse */
+    0,                              /* tp_clear */
+    0,                              /* tp_richcompare */
+    0,                              /* tp_weaklistoffset */
+    0,                              /* tp_iter */
+    0,                              /* tp_iternext */
+    0,                              /* tp_methods */
+    0,                              /* tp_members */
+    0,                              /* tp_getset */
+    0,                              /* tp_base */
+    0,                              /* tp_dict */
+    0,                              /* tp_descr_get */
+    0,                              /* tp_descr_set */
+    0,                              /* tp_dictoffset */
+    0,                              /* tp_init */
+    0,                              /* tp_alloc */
+    (newfunc)enumitem_new,          /* tp_new */
+    0,                              /* tp_free */
+    0,                              /* tp_is_gc*/
+    0,                              /* tp_bases */
+    0,                              /* tp_mro */
+    0,                              /* tp_cache */
+    0,                              /* tp_subclasses */
+    0,                              /* tp_weaklist */
+    0,                              /* tp_del */
+    0                               /* tp_version_tag */
 };
-
 
 zbarEnumItem*
 zbarEnumItem_New (PyObject *byname,
@@ -152,19 +192,58 @@ enum_dealloc (zbarEnum *self)
     ((PyObject*)self)->ob_type->tp_free((PyObject*)self);
 }
 
+
+
 PyTypeObject zbarEnum_Type = {
     PyObject_HEAD_INIT(NULL)
-    .tp_name        = "zbar.Enum",
-    .tp_doc         = enum_doc,
-    .tp_basicsize   = sizeof(zbarEnum),
-    .tp_flags       = Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE |
-                      Py_TPFLAGS_HAVE_GC,
-    .tp_dictoffset  = offsetof(zbarEnum, byname),
-    .tp_traverse    = (traverseproc)enum_traverse,
-    .tp_clear       = (inquiry)enum_clear,
-    .tp_dealloc     = (destructor)enum_dealloc,
+    0,
+    "zbar.Enum",                    /* tp_name */
+    sizeof(zbarEnum),               /* tp_basicsize */
+    0,                              /* tp_itemsize */
+    (destructor)enum_dealloc,       /* tp_dealloc */
+    0,                              /* tp_print */
+    0,                              /* tp_getattr */
+    0,                              /* tp_setattr */
+    0,                              /* tp_compare */
+    0,                              /* tp_repr */
+    0,                              /* tp_as_number */
+    0,                              /* tp_as_sequence */
+    0,                              /* tp_as_mapping */
+    0,                              /* tp_hash */
+    0,                              /* tp_call */
+    0,                              /* tp_str */
+    0,                              /* tp_getattro */
+    0,                              /* tp_setattro */
+    0,                              /* tp_as_buffer */
+    Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE | Py_TPFLAGS_HAVE_GC, /* tp_flags */
+    enum_doc,                       /* tp_doc */
+    (traverseproc)enum_traverse,    /* tp_traverse */
+    (inquiry)enum_clear,            /* tp_clear */
+    0,                              /* tp_richcompare */
+    0,                              /* tp_weaklistoffset */
+    0,                              /* tp_iter */
+    0,                              /* tp_iternext */
+    0,                              /* tp_methods */
+    0,                              /* tp_members */
+    0,                              /* tp_getset */
+    0,                              /* tp_base */
+    0,                              /* tp_dict */
+    0,                              /* tp_descr_get */
+    0,                              /* tp_descr_set */
+    offsetof(zbarEnum, byname),     /* tp_dictoffset */
+    0,                              /* tp_init */
+    0,                              /* tp_alloc */
+    0,                              /* tp_new */
+    0,                              /* tp_free */
+    0,                              /* tp_is_gc*/
+    0,                              /* tp_bases */
+    0,                              /* tp_mro */
+    0,                              /* tp_cache */
+    0,                              /* tp_subclasses */
+    0,                              /* tp_weaklist */
+    0,                              /* tp_del */
+    0                               /* tp_version_tag */
 };
-
 
 zbarEnum*
 zbarEnum_New ()

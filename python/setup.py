@@ -1,5 +1,13 @@
 #!/usr/bin/env python
-from distutils.core import setup, Extension
+import platform
+import shutil
+
+from setuptools import setup, Extension
+
+
+assert('64bit' == platform.architecture()[0])
+shutil.copy('../x64/Release/libzbar64-0.dll', '.')
+shutil.copy('../zbar/libiconv/dll_x64/libiconv.dll', '.')
 
 setup(
     name = 'zbar',
@@ -38,7 +46,10 @@ setup(
                 'decoder.c',
                 'scanner.c',
                 ],
-            libraries = [ 'zbar' ],
+            libraries = [ 'libzbar64-0' ],
+            include_dirs = ['../include/'],
+            library_dirs = ['../x64/Release']
         ),
     ],
+    data_files = [('', ['libzbar64-0.dll', 'libiconv.dll'])],
 )

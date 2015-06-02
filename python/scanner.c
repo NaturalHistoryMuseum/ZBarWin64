@@ -35,16 +35,17 @@ scanner_new (PyTypeObject *type,
              PyObject *kwds)
 {
     zbarDecoder *decoder = NULL;
+    zbarScanner *self = NULL;
+    zbar_decoder_t *zdcode = NULL;
     static char *kwlist[] = { "decoder", NULL };
     if(!PyArg_ParseTupleAndKeywords(args, kwds, "|O!", kwlist,
                                     &decoder, zbarDecoder_Type))
         return(NULL);
 
-    zbarScanner *self = (zbarScanner*)type->tp_alloc(type, 0);
+    self = (zbarScanner*)type->tp_alloc(type, 0);
     if(!self)
         return(NULL);
 
-    zbar_decoder_t *zdcode = NULL;
     if(decoder) {
         Py_INCREF(decoder);
         self->decoder = decoder;
@@ -95,9 +96,10 @@ static zbarEnumItem*
 scanner_get_color (zbarScanner *self,
                    void *closure)
 {
+    zbarEnumItem *color = NULL;
     zbar_color_t zcol = zbar_scanner_get_color(self->zscn);
     assert(zcol == ZBAR_BAR || zcol == ZBAR_SPACE);
-    zbarEnumItem *color = color_enum[zcol];
+    color = color_enum[zcol];
     Py_INCREF((PyObject*)color);
     return(color);
 }
@@ -141,11 +143,12 @@ scanner_scan_y (zbarScanner *self,
 {
     /* FIXME should accept sequence of values */
     int y = 0;
+    zbar_symbol_type_t sym;
     static char *kwlist[] = { "y", NULL };
     if(!PyArg_ParseTupleAndKeywords(args, kwds, "i", kwlist, &y))
         return(NULL);
 
-    zbar_symbol_type_t sym = zbar_scan_y(self->zscn, y);
+    sym = zbar_scan_y(self->zscn, y);
     if(PyErr_Occurred())
         /* propagate errors during callback */
         return(NULL);
@@ -167,17 +170,54 @@ static PyMethodDef scanner_methods[] = {
     { NULL, },
 };
 
+
 PyTypeObject zbarScanner_Type = {
     PyObject_HEAD_INIT(NULL)
-    .tp_name        = "zbar.Scanner",
-    .tp_doc         = scanner_doc,
-    .tp_basicsize   = sizeof(zbarScanner),
-    .tp_flags       = Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE |
-                      Py_TPFLAGS_HAVE_GC,
-    .tp_new         = (newfunc)scanner_new,
-    .tp_traverse    = (traverseproc)scanner_traverse,
-    .tp_clear       = (inquiry)scanner_clear,
-    .tp_dealloc     = (destructor)scanner_dealloc,
-    .tp_getset      = scanner_getset,
-    .tp_methods     = scanner_methods,
+	0,                              /* ob_size */
+    "zbar.Scanner",                 /* tp_name */
+    sizeof(zbarScanner),            /* tp_basicsize */
+    0,                              /* tp_itemsize */
+    (destructor)scanner_dealloc,    /* tp_dealloc */
+    0,                              /* tp_print */
+    0,                              /* tp_getattr */
+    0,                              /* tp_setattr */
+    0,                              /* tp_compare */
+    0,                              /* tp_repr */
+    0,                              /* tp_as_number */
+    0,                              /* tp_as_sequence */
+    0,                              /* tp_as_mapping */
+    0,                              /* tp_hash */
+    0,                              /* tp_call */
+    0,                              /* tp_str */
+    0,                              /* tp_getattro */
+    0,                              /* tp_setattro */
+    0,                              /* tp_as_buffer */
+    Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE | Py_TPFLAGS_HAVE_GC, /* tp_flags */
+    scanner_doc,                    /* tp_doc */
+     (traverseproc)scanner_traverse,  /* tp_traverse */
+    (inquiry)scanner_clear,         /* tp_clear */
+    0,                              /* tp_richcompare */
+    0,                              /* tp_weaklistoffset */
+    0,                              /* tp_iter */
+    0,                              /* tp_iternext */
+    scanner_methods,                /* tp_methods */
+    0,                              /* tp_members */
+    scanner_getset,                 /* tp_getset */
+    0,                              /* tp_base */
+    0,                              /* tp_dict */
+    0,                              /* tp_descr_get */
+    0,                              /* tp_descr_set */
+    0,                              /* tp_dictoffset */
+    0,                              /* tp_init */
+    0,                              /* tp_alloc */
+    (newfunc)scanner_new,           /* tp_new */
+    0,                              /* tp_free */
+    0,                              /* tp_is_gc*/
+    0,                              /* tp_bases */
+    0,                              /* tp_mro */
+    0,                              /* tp_cache */
+    0,                              /* tp_subclasses */
+    0,                              /* tp_weaklist */
+    0,                              /* tp_del */
+    0                               /* tp_version_tag */
 };

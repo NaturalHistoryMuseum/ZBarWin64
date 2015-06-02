@@ -34,10 +34,11 @@ decoder_new (PyTypeObject *type,
              PyObject *kwds)
 {
     static char *kwlist[] = { NULL };
+    zbarDecoder *self;
     if(!PyArg_ParseTupleAndKeywords(args, kwds, "", kwlist))
         return(NULL);
 
-    zbarDecoder *self = (zbarDecoder*)type->tp_alloc(type, 0);
+    self = (zbarDecoder*)type->tp_alloc(type, 0);
     if(!self)
         return(NULL);
 
@@ -84,8 +85,9 @@ decoder_get_color (zbarDecoder *self,
                    void *closure)
 {
     zbar_color_t zcol = zbar_decoder_get_color(self->zdcode);
+    zbarEnumItem *color;
     assert(zcol == ZBAR_BAR || zcol == ZBAR_SPACE);
-    zbarEnumItem *color = color_enum[zcol];
+    color = color_enum[zcol];
     Py_INCREF((PyObject*)color);
     return(color);
 }
@@ -171,6 +173,7 @@ decoder_get_configs_meth (zbarDecoder *self,
                           PyObject *kwds)
 {
     zbar_symbol_type_t sym = ZBAR_NONE;
+    unsigned int mask;
     static char *kwlist[] = { "symbology", NULL };
     if(!PyArg_ParseTupleAndKeywords(args, kwds, "|i", kwlist, &sym))
         return(NULL);
@@ -178,7 +181,7 @@ decoder_get_configs_meth (zbarDecoder *self,
     if(sym == ZBAR_NONE)
         sym = zbar_decoder_get_type(self->zdcode);
 
-    unsigned int mask = zbar_decoder_get_configs(self->zdcode, sym);
+    mask = zbar_decoder_get_configs(self->zdcode, sym);
     return(zbarEnum_SetFromMask(config_enum, mask));
 }
 
@@ -229,13 +232,15 @@ decoder_new_scan (zbarDecoder *self,
 void
 decode_handler (zbar_decoder_t *zdcode)
 {
+    zbarDecoder *self;
+    PyObject *junk;
     assert(zdcode);
-    zbarDecoder *self = zbar_decoder_get_userdata(zdcode);
+    self = zbar_decoder_get_userdata(zdcode);
     assert(self);
     assert(self->zdcode == zdcode);
     assert(self->handler);
     assert(self->args);
-    PyObject *junk = PyObject_Call(self->handler, self->args, NULL);
+    junk = PyObject_Call(self->handler, self->args, NULL);
     Py_XDECREF(junk);
 }
 
@@ -287,11 +292,12 @@ decoder_decode_width (zbarDecoder *self,
                       PyObject *kwds)
 {
     unsigned int width = 0;
+    zbar_symbol_type_t sym;
     static char *kwlist[] = { "width", NULL };
     if(!PyArg_ParseTupleAndKeywords(args, kwds, "I", kwlist, &width))
         return(NULL);
 
-    zbar_symbol_type_t sym = zbar_decode_width(self->zdcode, width);
+    sym = zbar_decode_width(self->zdcode, width);
     if(PyErr_Occurred())
         /* propagate errors during callback */
         return(NULL);
@@ -323,15 +329,51 @@ static PyMethodDef decoder_methods[] = {
 
 PyTypeObject zbarDecoder_Type = {
     PyObject_HEAD_INIT(NULL)
-    .tp_name        = "zbar.Decoder",
-    .tp_doc         = decoder_doc,
-    .tp_basicsize   = sizeof(zbarDecoder),
-    .tp_flags       = Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE |
-                      Py_TPFLAGS_HAVE_GC,
-    .tp_new         = (newfunc)decoder_new,
-    .tp_traverse    = (traverseproc)decoder_traverse,
-    .tp_clear       = (inquiry)decoder_clear,
-    .tp_dealloc     = (destructor)decoder_dealloc,
-    .tp_getset      = decoder_getset,
-    .tp_methods     = decoder_methods,
+	0,                              /* ob_size */
+    "zbar.Decoder",                 /* tp_name */
+    sizeof(zbarDecoder),            /* tp_basicsize */
+    0,                              /* tp_itemsize */
+    (destructor)decoder_dealloc,    /* tp_dealloc */
+    0,                              /* tp_print */
+    0,                              /* tp_getattr */
+    0,                              /* tp_setattr */
+    0,                              /* tp_compare */
+    0,                              /* tp_repr */
+    0,                              /* tp_as_number */
+    0,                              /* tp_as_sequence */
+    0,                              /* tp_as_mapping */
+    0,                              /* tp_hash */
+    0,                              /* tp_call */
+    0,                              /* tp_str */
+    0,                              /* tp_getattro */
+    0,                              /* tp_setattro */
+    0,                              /* tp_as_buffer */
+    Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE |Py_TPFLAGS_HAVE_GC,  /* tp_flags */
+    decoder_doc,                    /* tp_doc */
+    (traverseproc)decoder_traverse, /* tp_traverse */
+    (inquiry)decoder_clear,         /* tp_clear */
+    0,                              /* tp_richcompare */
+    0,                              /* tp_weaklistoffset */
+    0,                              /* tp_iter */
+    0,                              /* tp_iternext */
+    decoder_methods,                /* tp_methods */
+    0,                              /* tp_members */
+    decoder_getset,                 /* tp_getset */
+    0,                              /* tp_base */
+    0,                              /* tp_dict */
+    0,                              /* tp_descr_get */
+    0,                              /* tp_descr_set */
+    0,                              /* tp_dictoffset */
+    0,                              /* tp_init */
+    0,                              /* tp_alloc */
+    (newfunc)decoder_new,           /* tp_new */
+    0,                              /* tp_free */
+    0,                              /* tp_is_gc*/
+    0,                              /* tp_bases */
+    0,                              /* tp_mro */
+    0,                              /* tp_cache */
+    0,                              /* tp_subclasses */
+    0,                              /* tp_weaklist */
+    0,                              /* tp_del */
+    0                               /* tp_version_tag */
 };

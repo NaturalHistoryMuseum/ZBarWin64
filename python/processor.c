@@ -38,6 +38,7 @@ processor_new (PyTypeObject *type,
 {
     static char *kwlist[] = { "enable_threads", NULL };
     int threaded = -1;
+    zbarProcessor *self;
     if(!PyArg_ParseTupleAndKeywords(args, kwds, "|O&", kwlist,
                                     object_to_bool, &threaded))
         return(NULL);
@@ -55,7 +56,7 @@ processor_new (PyTypeObject *type,
     threaded = 0;
 #endif
 
-    zbarProcessor *self = (zbarProcessor*)type->tp_alloc(type, 0);
+    self = (zbarProcessor*)type->tp_alloc(type, 0);
     if(!self)
         return(NULL);
 
@@ -119,11 +120,12 @@ processor_set_bool (zbarProcessor *self,
                     PyObject *value,
                     void *closure)
 {
+    int rc, val;
     if(!value) {
         PyErr_SetString(PyExc_TypeError, "cannot delete attribute");
         return(-1);
     }
-    int rc, val = PyObject_IsTrue(value);
+    val = PyObject_IsTrue(value);
     if(val < 0)
         return(-1);
     switch((intptr_t)closure) {
@@ -158,12 +160,12 @@ processor_set_request_size (zbarProcessor *self,
                             PyObject *value,
                             void *closure)
 {
+    int dims[2];
     if(!value) {
         zbar_processor_request_size(self->zproc, 0, 0);
         return(0);
     }
 
-    int dims[2];
     if(parse_dimensions(value, dims, 2) ||
        dims[0] < 0 || dims[1] < 0) {
         PyErr_SetString(PyExc_ValueError,
@@ -262,11 +264,11 @@ processor_user_wait (zbarProcessor *self,
 {
     int timeout = -1;
     static char *kwlist[] = { "timeout", NULL };
+    int rc = -1;
     if(!PyArg_ParseTupleAndKeywords(args, kwds, "|O&", kwlist,
                                     object_to_timeout, &timeout))
         return(NULL);
 
-    int rc = -1;
     Py_BEGIN_ALLOW_THREADS
     rc = zbar_processor_user_wait(self->zproc, timeout);
     Py_END_ALLOW_THREADS
@@ -283,11 +285,11 @@ processor_process_one (zbarProcessor *self,
 {
     int timeout = -1;
     static char *kwlist[] = { "timeout", NULL };
+    int rc = -1;
     if(!PyArg_ParseTupleAndKeywords(args, kwds, "|O&", kwlist,
                                     object_to_timeout, &timeout))
         return(NULL);
 
-    int rc = -1;
     Py_BEGIN_ALLOW_THREADS
     rc = zbar_process_one(self->zproc, timeout);
     Py_END_ALLOW_THREADS
@@ -304,6 +306,7 @@ processor_process_image (zbarProcessor *self,
 {
     zbarImage *img = NULL;
     static char *kwlist[] = { "image", NULL };
+    int n = -1;
     if(!PyArg_ParseTupleAndKeywords(args, kwds, "O!", kwlist,
                                     &zbarImage_Type, &img))
         return(NULL);
@@ -311,7 +314,6 @@ processor_process_image (zbarProcessor *self,
     if(zbarImage_validate(img))
         return(NULL);
 
-    int n = -1;
     Py_BEGIN_ALLOW_THREADS
     n = zbar_process_image(self->zproc, img->zimg);
     Py_END_ALLOW_THREADS
@@ -325,15 +327,19 @@ void
 process_handler (zbar_image_t *zimg,
                  const void *userdata)
 {
-    PyGILState_STATE gstate;
-    gstate = PyGILState_Ensure();
+    PyGILState_STATE gstate = PyGILState_Ensure();
 
     zbarProcessor *self = (zbarProcessor*)userdata;
+    zbarImage *img;
+
+    PyObject *args = PyTuple_New(3);
+    PyObject *junk;
+
     assert(self);
     assert(self->handler);
     assert(self->closure);
 
-    zbarImage *img = zbar_image_get_userdata(zimg);
+    img = zbar_image_get_userdata(zimg);
     if(!img || img->zimg != zimg) {
         img = zbarImage_FromImage(zimg);
         if(!img) {
@@ -344,14 +350,15 @@ process_handler (zbar_image_t *zimg,
     else
         Py_INCREF(img);
 
-    PyObject *args = PyTuple_New(3);
+    args = PyTuple_New(3);
+    junk;
     Py_INCREF(self);
     Py_INCREF(self->closure);
     PyTuple_SET_ITEM(args, 0, (PyObject*)self);
     PyTuple_SET_ITEM(args, 1, (PyObject*)img);
     PyTuple_SET_ITEM(args, 2, self->closure);
 
-    PyObject *junk = PyObject_Call(self->handler, args, NULL);
+    junk = PyObject_Call(self->handler, args, NULL);
     if(junk)
         Py_DECREF(junk);
     else {
@@ -422,15 +429,51 @@ static PyMethodDef processor_methods[] = {
 
 PyTypeObject zbarProcessor_Type = {
     PyObject_HEAD_INIT(NULL)
-    .tp_name        = "zbar.Processor",
-    .tp_doc         = processor_doc,
-    .tp_basicsize   = sizeof(zbarProcessor),
-    .tp_flags       = Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE |
-                      Py_TPFLAGS_HAVE_GC,
-    .tp_new         = (newfunc)processor_new,
-    .tp_traverse    = (traverseproc)processor_traverse,
-    .tp_clear       = (inquiry)processor_clear,
-    .tp_dealloc     = (destructor)processor_dealloc,
-    .tp_getset      = processor_getset,
-    .tp_methods     = processor_methods,
+	0,                              /* ob_size */
+    "zbar.Processor",               /* tp_name */
+    sizeof(zbarProcessor),          /* tp_basicsize */
+    0,                              /* tp_itemsize */
+    (destructor)processor_dealloc,  /* tp_dealloc */
+    0,                              /* tp_print */
+    0,                              /* tp_getattr */
+    0,                              /* tp_setattr */
+    0,                              /* tp_compare */
+    0,                              /* tp_repr */
+    0,                              /* tp_as_number */
+    0,                              /* tp_as_sequence */
+    0,                              /* tp_as_mapping */
+    0,                              /* tp_hash */
+    0,                              /* tp_call */
+    0,                              /* tp_str */
+    0,                              /* tp_getattro */
+    0,                              /* tp_setattro */
+    0,                              /* tp_as_buffer */
+    Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE |Py_TPFLAGS_HAVE_GC,  /* tp_flags */
+    processor_doc,                  /* tp_doc */
+    (traverseproc)processor_traverse, /* tp_traverse */
+    (inquiry)processor_clear,       /* tp_clear */
+    0,                              /* tp_richcompare */
+    0,                              /* tp_weaklistoffset */
+    0,                              /* tp_iter */
+    0,                              /* tp_iternext */
+    processor_methods,              /* tp_methods */
+    0,                              /* tp_members */
+    processor_getset,               /* tp_getset */
+    0,                              /* tp_base */
+    0,                              /* tp_dict */
+    0,                              /* tp_descr_get */
+    0,                              /* tp_descr_set */
+    0,                              /* tp_dictoffset */
+    0,                              /* tp_init */
+    0,                              /* tp_alloc */
+    (newfunc)processor_new,         /* tp_new */
+    0,                              /* tp_free */
+    0,                              /* tp_is_gc*/
+    0,                              /* tp_bases */
+    0,                              /* tp_mro */
+    0,                              /* tp_cache */
+    0,                              /* tp_subclasses */
+    0,                              /* tp_weaklist */
+    0,                              /* tp_del */
+    0                               /* tp_version_tag */
 };

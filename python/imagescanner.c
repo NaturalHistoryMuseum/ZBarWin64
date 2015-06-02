@@ -34,10 +34,12 @@ imagescanner_new (PyTypeObject *type,
                   PyObject *kwds)
 {
     static char *kwlist[] = { NULL };
+    zbarImageScanner *self;
+
     if(!PyArg_ParseTupleAndKeywords(args, kwds, "", kwlist))
         return(NULL);
 
-    zbarImageScanner *self = (zbarImageScanner*)type->tp_alloc(type, 0);
+    self = (zbarImageScanner*)type->tp_alloc(type, 0);
     if(!self)
         return(NULL);
 
@@ -67,7 +69,8 @@ imagescanner_get_results (zbarImageScanner *self,
 }
 
 static PyGetSetDef imagescanner_getset[] = {
-    { "results", (getter)imagescanner_get_results, },
+    { "results", (getter)imagescanner_get_results, NULL, NULL},
+    {NULL}
 };
 
 static PyObject*
@@ -145,6 +148,7 @@ imagescanner_scan (zbarImageScanner *self,
 {
     zbarImage *img = NULL;
     static char *kwlist[] = { "image", NULL };
+    int n;
     if(!PyArg_ParseTupleAndKeywords(args, kwds, "O!", kwlist,
                                     &zbarImage_Type, &img))
         return(NULL);
@@ -152,7 +156,7 @@ imagescanner_scan (zbarImageScanner *self,
     if(zbarImage_validate(img))
         return(NULL);
 
-    int n = zbar_scan_image(self->zscn, img->zimg);
+    n = zbar_scan_image(self->zscn, img->zimg);
     if(n < 0) {
         PyErr_Format(PyExc_ValueError, "unsupported image format");
         return(NULL);
@@ -176,12 +180,42 @@ static PyMethodDef imagescanner_methods[] = {
 
 PyTypeObject zbarImageScanner_Type = {
     PyObject_HEAD_INIT(NULL)
-    .tp_name        = "zbar.ImageScanner",
-    .tp_doc         = imagescanner_doc,
-    .tp_basicsize   = sizeof(zbarImageScanner),
-    .tp_flags       = Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE,
-    .tp_new         = (newfunc)imagescanner_new,
-    .tp_dealloc     = (destructor)imagescanner_dealloc,
-    .tp_getset      = imagescanner_getset,
-    .tp_methods     = imagescanner_methods,
+	0,                              /* ob_size */
+    "zbar.ImageScanner",            /* tp_name */
+    sizeof(zbarImageScanner),       /* tp_basicsize */
+    0,                              /* tp_itemsize */
+    (destructor)imagescanner_dealloc,  /* tp_dealloc */
+    0,                              /* tp_print */
+    0,                              /* tp_getattr */
+    0,                              /* tp_setattr */
+    0,                              /* tp_compare */
+    0,                              /* tp_repr */
+    0,                              /* tp_as_number */
+    0,                              /* tp_as_sequence */
+    0,                              /* tp_as_mapping */
+    0,                              /* tp_hash */
+    0,                              /* tp_call */
+    0,                              /* tp_str */
+    0,                              /* tp_getattro */
+    0,                              /* tp_setattro */
+    0,                              /* tp_as_buffer */
+    Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE, /* tp_flags */
+    imagescanner_doc,               /* tp_doc */
+    0,                              /* tp_traverse */
+    0,                              /* tp_clear */
+    0,                              /* tp_richcompare */
+    0,                              /* tp_weaklistoffset */
+    0,                              /* tp_iter */
+    0,                              /* tp_iternext */
+    imagescanner_methods,           /* tp_methods */
+    0,                              /* tp_members */
+    imagescanner_getset,            /* tp_getset */
+    0,                              /* tp_base */
+    0,                              /* tp_dict */
+    0,                              /* tp_descr_get */
+    0,                              /* tp_descr_set */
+    0,                              /* tp_dictoffset */
+    0,                              /* tp_init */
+    0,                              /* tp_alloc */
+    (newfunc)imagescanner_new       /* tp_new */
 };

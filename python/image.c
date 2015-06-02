@@ -135,12 +135,13 @@ image_set_format (zbarImage *self,
                   PyObject *value,
                   void *closure)
 {
+    char *format;
+    Py_ssize_t len;
     if(!value) {
         PyErr_SetString(PyExc_TypeError, "cannot delete format attribute");
         return(-1);
     }
-    char *format = NULL;
-    Py_ssize_t len;
+    format = NULL;
     if(PyString_AsStringAndSize(value, &format, &len) ||
        !format || len != 4) {
         if(!format)
@@ -168,12 +169,12 @@ image_set_size (zbarImage *self,
                 PyObject *value,
                 void *closure)
 {
+    int dims[2];
     if(!value) {
         PyErr_SetString(PyExc_TypeError, "cannot delete size attribute");
         return(-1);
     }
 
-    int dims[2];
     if(parse_dimensions(value, dims, 2) ||
        dims[0] < 0 || dims[1] < 0) {
         PyErr_SetString(PyExc_ValueError,
@@ -201,13 +202,14 @@ image_set_crop (zbarImage *self,
                 void *closure)
 {
     unsigned w, h;
+    int dims[4];
     zbar_image_get_size(self->zimg, &w, &h);
+
     if(!value) {
         zbar_image_set_crop(self->zimg, 0, 0, w, h);
         return(0);
     }
 
-    int dims[4];
     if(parse_dimensions(value, dims, 4) ||
        dims[2] < 0 || dims[3] < 0) {
         PyErr_SetString(PyExc_ValueError,
@@ -277,14 +279,16 @@ static PyObject*
 image_get_data (zbarImage *self,
                 void *closure)
 {
+    const char *data;
+    unsigned long datalen;
     assert(zbar_image_get_userdata(self->zimg) == self);
     if(self->data) {
         Py_INCREF(self->data);
         return(self->data);
     }
 
-    const char *data = zbar_image_get_data(self->zimg);
-    unsigned long datalen = zbar_image_get_data_length(self->zimg);
+    data = zbar_image_get_data(self->zimg);
+    datalen = zbar_image_get_data_length(self->zimg);
     if(!data || !datalen) {
         Py_INCREF(Py_None);
         return(Py_None);
@@ -316,12 +320,12 @@ image_set_data (zbarImage *self,
                 PyObject *value,
                 void *closure)
 {
+    char *data;
+    Py_ssize_t datalen;
     if(!value) {
         zbar_image_free_data(self->zimg);
         return(0);
     }
-    char *data;
-    Py_ssize_t datalen;
     if(PyString_AsStringAndSize(value, &data, &datalen))
         return(-1);
 
@@ -376,6 +380,8 @@ image_convert (zbarImage *self,
 {
     const char *format = NULL;
     int width = -1, height = -1;
+    unsigned long fourcc;
+    zbarImage *img;
     static char *kwlist[] = { "format", "width", "height", NULL };
     if(!PyArg_ParseTupleAndKeywords(args, kwds, "s|ii", kwlist,
                                     &format, &width, &height))
@@ -388,9 +394,9 @@ image_convert (zbarImage *self,
                      format);
         return(NULL);
     }
-    unsigned long fourcc = zbar_fourcc_parse(format);
+    fourcc = zbar_fourcc_parse(format);
 
-    zbarImage *img = PyObject_GC_New(zbarImage, &zbarImage_Type);
+    img = PyObject_GC_New(zbarImage, &zbarImage_Type);
     if(!img)
         return(NULL);
     img->data = NULL;
@@ -417,19 +423,53 @@ static PyMethodDef image_methods[] = {
 
 PyTypeObject zbarImage_Type = {
     PyObject_HEAD_INIT(NULL)
-    .tp_name        = "zbar.Image",
-    .tp_doc         = image_doc,
-    .tp_basicsize   = sizeof(zbarImage),
-    .tp_flags       = Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE |
-                      Py_TPFLAGS_HAVE_GC,
-    .tp_new         = (newfunc)image_new,
-    .tp_init        = (initproc)image_init,
-    .tp_traverse    = (traverseproc)image_traverse,
-    .tp_clear       = (inquiry)image_clear,
-    .tp_dealloc     = (destructor)image_dealloc,
-    .tp_getset      = image_getset,
-    .tp_methods     = image_methods,
-    .tp_iter        = (getiterfunc)image_iter,
+	0,                              /* ob_size */
+    "zbar.Image",                   /* tp_name */
+    sizeof(zbarImage),              /* tp_basicsize */
+    0,                              /* tp_itemsize */
+    (destructor)image_dealloc,      /* tp_dealloc */
+    0,                              /* tp_print */
+    0,                              /* tp_getattr */
+    0,                              /* tp_setattr */
+    0,                              /* tp_compare */
+    0,                              /* tp_repr */
+    0,                              /* tp_as_number */
+    0,                              /* tp_as_sequence */
+    0,                              /* tp_as_mapping */
+    0,                              /* tp_hash */
+    0,                              /* tp_call */
+    0,                              /* tp_str */
+    0,                              /* tp_getattro */
+    0,                              /* tp_setattro */
+    0,                              /* tp_as_buffer */
+    Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE | Py_TPFLAGS_HAVE_GC, /* tp_flags */
+    0,                              /* tp_doc */
+    (traverseproc)image_traverse,   /* tp_traverse */
+    (inquiry)image_clear,           /* tp_clear */
+    0,                              /* tp_richcompare */
+    0,                              /* tp_weaklistoffset */
+    (getiterfunc)image_iter,        /* tp_iter */
+    0,                              /* tp_iternext */
+    image_methods,                  /* tp_methods */
+    0,                              /* tp_members */
+    image_getset,                   /* tp_getset */
+    0,                              /* tp_base */
+    0,                              /* tp_dict */
+    0,                              /* tp_descr_get */
+    0,                              /* tp_descr_set */
+    0,                              /* tp_dictoffset */
+    (initproc)image_init,           /* tp_init */
+    0,                              /* tp_alloc */
+    (newfunc)image_new,             /* tp_new */
+    0,                              /* tp_free */
+    0,                              /* tp_is_gc*/
+    0,                              /* tp_bases */
+    0,                              /* tp_mro */
+    0,                              /* tp_cache */
+    0,                              /* tp_subclasses */
+    0,                              /* tp_weaklist */
+    0,                              /* tp_del */
+    0                               /* tp_version_tag */
 };
 
 zbarImage*

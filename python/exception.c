@@ -23,7 +23,7 @@
 
 #include "zbarmodule.h"
 
-static inline PyObject*
+static PyObject*
 exc_get_message (zbarException *self,
                  void *closure)
 {
@@ -46,9 +46,10 @@ exc_init (zbarException *self,
           PyObject *args,
           PyObject *kwds)
 {
+    PyBaseExceptionObject *super;
     if(!_PyArg_NoKeywords(self->base.ob_type->tp_name, kwds))
         return(-1);
-    PyBaseExceptionObject *super = (PyBaseExceptionObject*)self;
+    super = (PyBaseExceptionObject*)self;
     Py_CLEAR(super->args);
     Py_INCREF(args);
     super->args = args;
@@ -66,8 +67,9 @@ exc_traverse (zbarException *self,
               visitproc visit,
               void *arg)
 {
+    PyTypeObject *base;
     Py_VISIT(self->obj);
-    PyTypeObject *base = (PyTypeObject*)PyExc_Exception;
+    base = (PyTypeObject*)PyExc_Exception;
     return(base->tp_traverse((PyObject*)self, visit, arg));
 }
 
@@ -114,16 +116,53 @@ static PyGetSetDef exc_getset[] = {
 
 PyTypeObject zbarException_Type = {
     PyObject_HEAD_INIT(NULL)
-    .tp_name        = "zbar.Exception",
-    .tp_basicsize   = sizeof(zbarException),
-    .tp_flags       = Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE |
-                      Py_TPFLAGS_HAVE_GC,
-    .tp_init        = (initproc)exc_init,
-    .tp_traverse    = (traverseproc)exc_traverse,
-    .tp_clear       = (inquiry)exc_clear,
-    .tp_dealloc     = (destructor)exc_dealloc,
-    .tp_str         = (reprfunc)exc_str,
-    .tp_getset      = exc_getset,
+	0,                              /* ob_size */
+    "zbar.Exception",               /* tp_name */
+    sizeof(zbarException),          /* tp_basicsize */
+    0,                              /* tp_itemsize */
+    (destructor)exc_dealloc,        /* tp_dealloc */
+    0,                              /* tp_print */
+    0,                              /* tp_getattr */
+    0,                              /* tp_setattr */
+    0,                              /* tp_compare */
+    0,                              /* tp_repr */
+    0,                              /* tp_as_number */
+    0,                              /* tp_as_sequence */
+    0,                              /* tp_as_mapping */
+    0,                              /* tp_hash */
+    0,                              /* tp_call */
+    (reprfunc)exc_str,              /* tp_str */
+    0,                              /* tp_getattro */
+    0,                              /* tp_setattro */
+    0,                              /* tp_as_buffer */
+    Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE | Py_TPFLAGS_HAVE_GC, /* tp_flags */
+    0,                              /* tp_doc */
+    (traverseproc)exc_traverse,     /* tp_traverse */
+    (inquiry)exc_clear,             /* tp_clear */
+    0,                              /* tp_richcompare */
+    0,                              /* tp_weaklistoffset */
+    0,                              /* tp_iter */
+    0,                              /* tp_iternext */
+    0,                              /* tp_methods */
+    0,                              /* tp_members */
+    exc_getset,                     /* tp_getset */
+    0,                              /* tp_base */
+    0,                              /* tp_dict */
+    0,                              /* tp_descr_get */
+    0,                              /* tp_descr_set */
+    0,                              /* tp_dictoffset */
+    (initproc)exc_init,             /* tp_init */
+    0,                              /* tp_alloc */
+    0,                              /* tp_new */
+    0,                              /* tp_free */
+    0,                              /* tp_is_gc*/
+    0,                              /* tp_bases */
+    0,                              /* tp_mro */
+    0,                              /* tp_cache */
+    0,                              /* tp_subclasses */
+    0,                              /* tp_weaklist */
+    0,                              /* tp_del */
+    0                               /* tp_version_tag */
 };
 
 PyObject*

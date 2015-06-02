@@ -109,13 +109,15 @@ parse_dimensions (PyObject *seq,
                   int *dims,
                   int n)
 {
+    int i;
+    PyObject *dim;
+
     if(!PySequence_Check(seq) ||
        PySequence_Size(seq) != n)
         return(-1);
 
-    int i;
     for(i = 0; i < n; i++, dims++) {
-        PyObject *dim = PySequence_GetItem(seq, i);
+        dim = PySequence_GetItem(seq, i);
         if(!dim)
             return(-1);
         *dims = PyInt_AsSsize_t(dim);
@@ -138,10 +140,11 @@ static PyObject*
 version (PyObject *self,
          PyObject *args)
 {
+    unsigned int major, minor;
+
     if(!PyArg_ParseTuple(args, ""))
         return(NULL);
 
-    unsigned int major, minor;
     zbar_version(&major, &minor);
 
     return(Py_BuildValue("II", major, minor));
@@ -184,10 +187,15 @@ static PyMethodDef zbar_functions[] = {
 PyMODINIT_FUNC
 initzbar (void)
 {
+    PyObject *mod;
+    PyObject *dict;
+    PyObject *tp_dict;
+    const enumdef *item;
+    zbar_error_t ei;
+
     /* initialize types */
     zbarEnumItem_Type.tp_base = &PyInt_Type;
     zbarException_Type.tp_base = (PyTypeObject*)PyExc_Exception;
-
     if(PyType_Ready(&zbarException_Type) < 0 ||
        PyType_Ready(&zbarEnumItem_Type) < 0 ||
        PyType_Ready(&zbarEnum_Type) < 0 ||
@@ -211,7 +219,6 @@ initzbar (void)
 
     zbar_exc[0] = (PyObject*)&zbarException_Type;
     zbar_exc[ZBAR_ERR_NOMEM] = NULL;
-    zbar_error_t ei;
     for(ei = ZBAR_ERR_INTERNAL; ei < ZBAR_ERR_NUM; ei++) {
         zbar_exc[ei] = PyErr_NewException(exc_names[ei], zbar_exc[0], NULL);
         if(!zbar_exc[ei])
@@ -224,7 +231,7 @@ initzbar (void)
     zbarEnum_Type.tp_setattro = NULL;
 
     /* initialize module */
-    PyObject *mod = Py_InitModule("zbar", zbar_functions);
+    mod = Py_InitModule("zbar", zbar_functions);
     if(!mod)
         return;
 
@@ -247,13 +254,12 @@ initzbar (void)
             PyModule_AddObject(mod, exc_names[ei] + 5, zbar_exc[ei]);
 
     /* add constants */
-    PyObject *dict = PyModule_GetDict(mod);
+    dict = PyModule_GetDict(mod);
     color_enum[ZBAR_SPACE] =
         zbarEnumItem_New(dict, NULL, ZBAR_SPACE, "SPACE");
     color_enum[ZBAR_BAR] =
         zbarEnumItem_New(dict, NULL, ZBAR_BAR, "BAR");
 
-    const enumdef *item;
     for(item = config_defs; item->strval; item++)
         zbarEnum_Add(config_enum, item->intval, item->strval);
     for(item = modifier_defs; item->strval; item++)
@@ -261,7 +267,7 @@ initzbar (void)
     for(item = orient_defs; item->strval; item++)
         zbarEnum_Add(orient_enum, item->intval, item->strval);
 
-    PyObject *tp_dict = zbarSymbol_Type.tp_dict;
+    tp_dict = zbarSymbol_Type.tp_dict;
     for(item = symbol_defs; item->strval; item++)
         zbarEnumItem_New(tp_dict, symbol_enum, item->intval, item->strval);
     symbol_NONE = zbarSymbol_LookupEnum(ZBAR_NONE);
