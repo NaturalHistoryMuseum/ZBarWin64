@@ -1,17 +1,34 @@
 # ZBarWin64
-Adds Visual Studio 64-bit DLL build of the zbar Python package.
-Tested with [Anaconda](http://www.continuum.io/) distribution of Python 2.7.x
-and Visual Studio Community 2013.
 
-Build the 64-bit Release target of zbar64
+A Windows 64-bit wheel build of the zbar Python package.
 
-Install the current Python 2.7 release of [Anaconda](https://store.continuum.io/cshop/anaconda/)
+## Installing on Windows 64-bit
+Install a release from this repo:
 
-Build the zbar Python wrapper
+```
+https://github.com/NaturalHistoryMuseum/ZBarWin64/releases/download/v0.10/zbar-0.10-cp27-none-win_amd64.whl
+```
 
-    cd python
-    pip install --upgrade pip
-    pip install --upgrade setuptools
-    pip install wheel
-    build.bat
-    pip install dist\zbar-<whatever>.whl
+The wheel was built using Visual C++ 2013. If Python reports an `ImportError`
+when `import pydmtx` is run then you will need to install the
+[Visual C++ Redistributable Packages for Visual Studio 2013](https://www.microsoft.com/en-US/download/details.aspx?id=40784).
+
+## Bulding
+
+You should only need to build if you want to release a new version.
+
+* Install Visual C++ 2013 Community Edition
+
+* Build the 64-bit Release target of zbar64
+
+* Install the latest Python 2.7 release of [Anaconda](https://store.continuum.io/cshop/anaconda/)
+
+* Build the zbar Python extension module and a wheel:
+
+    ```
+        cd <where you cloned this repo>\python
+        pip install --upgrade pip
+        pip install --upgrade setuptools
+        pip install wheel
+        build.bat
+    ```
