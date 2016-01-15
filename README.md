@@ -13,7 +13,7 @@ The wheel was built using Visual C++ 2013. If Python reports an `ImportError`
 when `import pydmtx` is run then you will need to install the
 [Visual C++ Redistributable Packages for Visual Studio 2013](https://www.microsoft.com/en-US/download/details.aspx?id=40784).
 
-## Bulding
+## Building
 
 You should only need to build if you want to release a new version.
 
