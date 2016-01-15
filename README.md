@@ -26,9 +26,9 @@ You should only need to build if you want to release a new version.
 * Build the zbar Python extension module and a wheel:
 
     ```
-        cd <where you cloned this repo>\python
-        pip install --upgrade pip
-        pip install --upgrade setuptools
-        pip install wheel
-        build.bat
+    cd <where you cloned this repo>\python
+    pip install --upgrade pip
+    pip install --upgrade setuptools
+    pip install wheel
+    build.bat
     ```
