@@ -10,7 +10,7 @@ https://github.com/NaturalHistoryMuseum/ZBarWin64/releases/download/v0.10/zbar-0
 ```
 
 The wheel was built using Visual C++ 2013. If Python reports an `ImportError`
-when `import pydmtx` is run then you will need to install the
+when `import zbar` is run then you will need to install the
 [Visual C++ Redistributable Packages for Visual Studio 2013](https://www.microsoft.com/en-US/download/details.aspx?id=40784).
 
 ## Building
